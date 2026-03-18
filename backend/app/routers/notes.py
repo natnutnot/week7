@@ -25,7 +25,9 @@ def list_notes(
 
     sort_field = sort.lstrip("-")
     order_fn = desc if sort.startswith("-") else asc
-    if hasattr(Note, sort_field):
+
+    allowed_sort_fields = {"id", "title", "created_at"}
+    if sort_field in allowed_sort_fields:
         stmt = stmt.order_by(order_fn(getattr(Note, sort_field)))
     else:
         stmt = stmt.order_by(desc(Note.created_at))
@@ -38,7 +40,7 @@ def list_notes(
 def create_note(payload: NoteCreate, db: Session = Depends(get_db)) -> NoteRead:
     note = Note(title=payload.title, content=payload.content)
     db.add(note)
-    db.flush()
+    db.commit()
     db.refresh(note)
     return NoteRead.model_validate(note)
 
@@ -48,12 +50,17 @@ def patch_note(note_id: int, payload: NotePatch, db: Session = Depends(get_db)) 
     note = db.get(Note, note_id)
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
+
+    if payload.title is None and payload.content is None:
+        raise HTTPException(status_code=400, detail="No fields to update")
+
     if payload.title is not None:
         note.title = payload.title
     if payload.content is not None:
         note.content = payload.content
+
     db.add(note)
-    db.flush()
+    db.commit()
     db.refresh(note)
     return NoteRead.model_validate(note)
 
@@ -66,3 +73,27 @@ def get_note(note_id: int, db: Session = Depends(get_db)) -> NoteRead:
     return NoteRead.model_validate(note)
 
 
+@router.delete("/{note_id}", status_code=204)
+def delete_note(note_id: int, db: Session = Depends(get_db)):
+    note = db.get(Note, note_id)
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+
+    db.delete(note)
+    db.commit()
+
+
+@router.put("/{note_id}", response_model=NoteRead)
+def update_note(note_id: int, payload: NoteCreate, db: Session = Depends(get_db)) -> NoteRead:
+    note = db.get(Note, note_id)
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+
+    note.title = payload.title
+    note.content = payload.content
+
+    db.add(note)
+    db.commit()
+    db.refresh(note)
+
+    return NoteRead.model_validate(note)
