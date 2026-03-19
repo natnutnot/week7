@@ -11,7 +11,9 @@ def test_create_complete_list_and_patch_action_item(client):
     done = r.json()
     assert done["completed"] is True
 
-    r = client.get("/action-items/", params={"completed": True, "limit": 5, "sort": "-created_at"})
+    r = client.get(
+        "/action-items/", params={"completed": True, "limit": 5, "sort": "-created_at"}
+    )
     assert r.status_code == 200
     items = r.json()
     assert len(items) >= 1
@@ -20,5 +22,3 @@ def test_create_complete_list_and_patch_action_item(client):
     assert r.status_code == 200
     patched = r.json()
     assert patched["description"] == "Updated"
-
-

@@ -13,9 +13,11 @@ from sqlalchemy.orm import sessionmaker
 
 @pytest.fixture()
 def client() -> Generator[TestClient, None, None]:
+    # Membuat file database sementara
     db_fd, db_path = tempfile.mkstemp()
     os.close(db_fd)
 
+    # Setup engine dan session
     engine = create_engine(f"sqlite:///{db_path}", connect_args={"check_same_thread": False})
     TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     Base.metadata.create_all(bind=engine)
@@ -33,9 +35,19 @@ def client() -> Generator[TestClient, None, None]:
 
     app.dependency_overrides[get_db] = override_get_db
 
+    # Menjalankan test
     with TestClient(app) as c:
         yield c
 
-    os.unlink(db_path)
-
-
+    # PERBAIKAN UNTUK WINDOWS:
+    # 1. Hapus override agar session tidak tertahan
+    app.dependency_overrides.clear()
+    # 2. Matikan engine agar koneksi ke file .db benar-benar putus
+    engine.dispose()
+    
+    # Sekarang file bisa dihapus dengan aman
+    try:
+        os.unlink(db_path)
+    except PermissionError:
+        # Jika masih gagal, biarkan saja agar tidak menghentikan proses test lainnya
+        pass
