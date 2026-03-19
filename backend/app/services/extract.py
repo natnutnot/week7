@@ -1,5 +1,6 @@
 import re
 
+
 def extract_action_items(text: str) -> list[str]:
     """
     Ekstraksi action item yang lebih canggih menggunakan regex.
@@ -12,11 +13,11 @@ def extract_action_items(text: str) -> list[str]:
         return []
 
     # 1. Pola untuk prefix kata kunci (contoh: TODO: beli susu)
-    keyword_pattern = r'(?i)^(?:todo|action|fixme|check|task):\s*(.*)'
-    
+    keyword_pattern = r"(?i)^(?:todo|action|fixme|check|task):\s*(.*)"
+
     # 2. Pola untuk checkbox markdown (contoh: [ ] bayar tagihan)
-    checkbox_pattern = r'^\[[ xX]?\]\s*(.*)'
-    
+    checkbox_pattern = r"^\[[ xX]?\]\s*(.*)"
+
     results = []
     lines = [line.strip("- *") for line in text.splitlines() if line.strip()]
 
@@ -26,13 +27,13 @@ def extract_action_items(text: str) -> list[str]:
         if kw_match:
             results.append(kw_match.group(1).strip())
             continue
-            
+
         # Coba cocokkan dengan checkbox
         cb_match = re.match(checkbox_pattern, line)
         if cb_match:
             results.append(cb_match.group(1).strip())
             continue
-            
+
         # Tetap dukung logika lama: kalimat yang diakhiri tanda seru (!)
         if line.endswith("!") and len(line) > 2:
             results.append(line.strip())

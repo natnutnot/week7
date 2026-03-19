@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import asc, desc, select
 from sqlalchemy.orm import Session
@@ -34,16 +33,6 @@ def list_notes(
     rows = db.execute(stmt.offset(skip).limit(limit)).scalars().all()
     return [NoteRead.model_validate(row) for row in rows]
 
-
-@router.post("/", response_model=NoteRead, status_code=201)
-def create_note(payload: NoteCreate, db: Session = Depends(get_db)) -> NoteRead:
-    note = Note(title=payload.title, content=payload.content)
-    db.add(note)
-    db.flush()
-    db.refresh(note)
-    return NoteRead.model_validate(note)
-
-
 @router.patch("/{note_id}", response_model=NoteRead)
 def patch_note(
     note_id: int, payload: NotePatch, db: Session = Depends(get_db)
@@ -77,3 +66,16 @@ def delete_note(note_id: int, db: Session = Depends(get_db)):
     db.delete(note)
     db.flush()
     return None
+
+
+@router.post("/", response_model=NoteRead, status_code=201)
+def create_note(payload: NoteCreate, db: Session = Depends(get_db)) -> NoteRead:
+    note = Note(
+        title=payload.title,
+        content=payload.content,
+        category_id=payload.category_id,  # Tambahkan ini
+    )
+    db.add(note)
+    db.flush()
+    db.refresh(note)
+    return NoteRead.model_validate(note)
