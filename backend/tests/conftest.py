@@ -3,12 +3,13 @@ import tempfile
 from collections.abc import Generator
 
 import pytest
-from backend.app.db import get_db
-from backend.app.main import app
-from backend.app.models import Base
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
+from backend.app.db import get_db
+from backend.app.main import app
+from backend.app.models import Base
 
 
 @pytest.fixture()
@@ -18,7 +19,9 @@ def client() -> Generator[TestClient, None, None]:
     os.close(db_fd)
 
     # Setup engine dan session
-    engine = create_engine(f"sqlite:///{db_path}", connect_args={"check_same_thread": False})
+    engine = create_engine(
+        f"sqlite:///{db_path}", connect_args={"check_same_thread": False}
+    )
     TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     Base.metadata.create_all(bind=engine)
 
@@ -44,7 +47,7 @@ def client() -> Generator[TestClient, None, None]:
     app.dependency_overrides.clear()
     # 2. Matikan engine agar koneksi ke file .db benar-benar putus
     engine.dispose()
-    
+
     # Sekarang file bisa dihapus dengan aman
     try:
         os.unlink(db_path)
