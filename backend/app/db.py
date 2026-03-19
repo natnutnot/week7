@@ -11,7 +11,9 @@ load_dotenv()
 
 DEFAULT_DB_PATH = os.getenv("DATABASE_PATH", "./data/app.db")
 
-engine = create_engine(f"sqlite:///{DEFAULT_DB_PATH}", connect_args={"check_same_thread": False})
+engine = create_engine(
+    f"sqlite:///{DEFAULT_DB_PATH}", connect_args={"check_same_thread": False}
+)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
@@ -54,5 +56,3 @@ def apply_seed_if_needed() -> None:
             if sql.strip():
                 for statement in [s.strip() for s in sql.split(";") if s.strip()]:
                     conn.execute(text(statement))
-
-
